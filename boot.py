@@ -1,6 +1,7 @@
 import telebot
 from pytube import YouTube
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+import re
 
 API_TOKEN = '7901940137:AAGQfDnI_P-LN5U_BtJGCPmAaZNXJp80jdM'
 bot = telebot.TeleBot(API_TOKEN)
@@ -15,12 +16,10 @@ def get_streams(url):
     return qualities, audio_tag
 
 # استقبال رابط الفيديو
-import re
-
 @bot.message_handler(func=lambda message: True)
 def download_video(message):
     url = message.text.strip()
-
+    
     # إزالة المعلمات الإضافية إذا كانت موجودة
     url = re.sub(r'(\?|&).+', '', url)
 
@@ -42,3 +41,22 @@ def download_video(message):
     except Exception as e:
         print(e)  # طباعة الخطأ لتشخيص المشكلة
         bot.reply_to(message, "عذرًا، حدث خطأ. تأكد من أن الرابط صالح وأنه فيديو يوتيوب.")
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_query(call):
+    try:
+        data = call.data.split(':')
+        if data[0] == 'video':
+            itag, url = data[1], data[2]
+            stream = YouTube(url).streams.get_by_itag(itag)
+            stream.download()
+            bot.answer_callback_query(call.id, "تم تحميل الفيديو!")
+        elif data[0] == 'audio':
+            itag, url = data[1], data[2]
+            stream = YouTube(url).streams.get_by_itag(itag)
+            stream.download()
+            bot.answer_callback_query(call.id, "تم تحميل الصوت!")
+    except Exception as e:
+        bot.answer_callback_query(call.id, "عذرًا، حدث خطأ أثناء التحميل.")
+
+bot.polling()
