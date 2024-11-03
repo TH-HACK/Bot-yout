@@ -1,8 +1,7 @@
 import os
-from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from telegram import Update, InputFile
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from pytube import YouTube
-from telegram import InputFile
 
 # دالة لتحميل الفيديو
 def download_video(url):
@@ -14,41 +13,40 @@ def download_video(url):
     except Exception as e:
         return str(e)
 
-# الدالة للتعامل مع الأمر /start
-def start(update: Update, context: CallbackContext) -> None:
-    update.message.reply_text("مرحباً! أرسل لي رابط الفيديو من يوتيوب وسأقوم بتحميله لك.")
+# دالة للترحيب عند بدء المحادثة
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text("مرحباً! أرسل لي رابط الفيديو من يوتيوب وسأقوم بتحميله لك.")
 
-# الدالة لتحميل الفيديو من الرابط المرسل
-def handle_message(update: Update, context: CallbackContext) -> None:
-    url = update.message.text
+# دالة لتحميل الفيديو عند إرسال الرابط
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    url = update.message.text.strip()  # إزالة المسافات الزائدة
     if "youtube.com/watch" in url or "youtu.be/" in url:
-        update.message.reply_text("جاري تحميل الفيديو...")
+        await update.message.reply_text("جاري تحميل الفيديو...")
         video_file = download_video(url)
         
         if isinstance(video_file, str):
             # إذا كان هناك خطأ
-            update.message.reply_text(f"حدث خطأ: {video_file}")
+            await update.message.reply_text(f"حدث خطأ: {video_file}")
         else:
             # إرسال الفيديو
             with open(video_file, 'rb') as video:
-                update.message.reply_video(video)
+                await update.message.reply_video(video)
             # حذف الفيديو بعد إرساله
             os.remove(video_file)
     else:
-        update.message.reply_text("يرجى إرسال رابط صحيح من يوتيوب.")
+        await update.message.reply_text("يرجى إرسال رابط صحيح من يوتيوب.")
 
-# الدالة الرئيسية
+# الدالة الرئيسية لتشغيل البوت
 def main() -> None:
-    # إعداد البوت
-    updater = Updater("7901940137:AAGQfDnI_P-LN5U_BtJGCPmAaZNXJp80jdM", use_context=True)
+    # استبدل YOUR_BOT_TOKEN بالتوكن الخاص بك
+    application = Application.builder().token("7901940137:AAGQfDnI_P-LN5U_BtJGCPmAaZNXJp80jdM").build()
     
     # إضافة المعالجات
-    updater.dispatcher.add_handler(CommandHandler("start", start))
-    updater.dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     
     # بدء البوت
-    updater.start_polling()
-    updater.idle()
+    application.run_polling()
 
 if __name__ == '__main__':
     # إنشاء مجلد للتخزين
