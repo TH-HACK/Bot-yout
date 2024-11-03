@@ -2,6 +2,7 @@ import os
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from pytube import YouTube
+from urllib.parse import urlparse, parse_qs
 
 # دالة لتحميل الفيديو
 def download_video(url):
@@ -14,22 +15,37 @@ def download_video(url):
         print(f"Error in download_video: {e}")
         return None
 
-# دالة الترحيب عند بدء المحادثة
+# دالة لترحيب عند بدء المحادثة
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text("مرحباً! أرسل لي رابط الفيديو من يوتيوب وسأقوم بتحميله لك.")
+
+# دالة لتنظيف الرابط
+def clean_youtube_url(url):
+    parsed_url = urlparse(url)
+    if "youtube.com" in parsed_url.netloc:
+        # استخلاص معرف الفيديو من المعاملات
+        video_id = parse_qs(parsed_url.query).get("v")
+        if video_id:
+            return f"https://youtube.com/watch?v={video_id[0]}"
+    elif "youtu.be" in parsed_url.netloc:
+        # إذا كان الرابط مختصرًا
+        return f"https://youtu.be{parsed_url.path}"
+    return url
 
 # دالة لمعالجة الرابط المرسل
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     url = update.message.text.strip()
-    if "youtube.com/watch" in url or "youtu.be/" in url:
+    # تنظيف الرابط من المعاملات غير الضرورية
+    cleaned_url = clean_youtube_url(url)
+    
+    if "youtube.com/watch" in cleaned_url or "youtu.be/" in cleaned_url:
         await update.message.reply_text("جاري تحميل الفيديو...")
-        video_file = download_video(url)
+        video_file = download_video(cleaned_url)
         
         if video_file is None:
-            # إذا كان هناك خطأ أثناء التحميل
             await update.message.reply_text("حدث خطأ أثناء تحميل الفيديو. تأكد من أن الرابط صحيح.")
         else:
-            # إرسال الفيديو
+            # إرسال الفيديو إذا تم تحميله بنجاح
             with open(video_file, 'rb') as video:
                 await update.message.reply_video(video)
             # حذف الفيديو بعد إرساله
