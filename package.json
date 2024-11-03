@@ -1,14 +1,13 @@
 {
-  "name": "telegram-bot",
+  "name": "pinterest-bot",
   "version": "1.0.0",
-  "description": "Telegram bot to download YouTube videos",
+  "description": "Telegram bot to download images from Pinterest",
   "main": "bot.js",
   "scripts": {
     "start": "node bot.js"
   },
   "dependencies": {
-    "node-telegram-bot-api": "^0.54.0",
-    "ytdl-core": "^4.9.1"
+    "node-telegram-bot-api": "^0.54.0"
   },
   "engines": {
     "node": ">=14.0.0"
