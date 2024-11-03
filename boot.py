@@ -1,5 +1,5 @@
 import os
-from telegram import Update, InputFile
+from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from pytube import YouTube
 
@@ -11,22 +11,22 @@ def download_video(url):
         video_file = video_stream.download(output_path="downloads/")
         return video_file
     except Exception as e:
-        return str(e)
+        return f"خطأ في تحميل الفيديو: {e}"
 
-# دالة للترحيب عند بدء المحادثة
+# دالة الترحيب عند بدء المحادثة
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text("مرحباً! أرسل لي رابط الفيديو من يوتيوب وسأقوم بتحميله لك.")
 
-# دالة لتحميل الفيديو عند إرسال الرابط
+# دالة لمعالجة الرابط المرسل
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    url = update.message.text.strip()  # إزالة المسافات الزائدة
+    url = update.message.text.strip()
     if "youtube.com/watch" in url or "youtu.be/" in url:
         await update.message.reply_text("جاري تحميل الفيديو...")
         video_file = download_video(url)
         
-        if isinstance(video_file, str):
-            # إذا كان هناك خطأ
-            await update.message.reply_text(f"حدث خطأ: {video_file}")
+        if "خطأ" in video_file:
+            # إذا كان هناك خطأ أثناء التحميل
+            await update.message.reply_text(f"{video_file}")
         else:
             # إرسال الفيديو
             with open(video_file, 'rb') as video:
@@ -38,8 +38,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 # الدالة الرئيسية لتشغيل البوت
 def main() -> None:
-    # استبدل YOUR_BOT_TOKEN بالتوكن الخاص بك
-    application = Application.builder().token("7901940137:AAGQfDnI_P-LN5U_BtJGCPmAaZNXJp80jdM").build()
+    # توكن البوت (قم باستخدام متغير بيئة آمن في التطبيقات الفعلية)
+    TOKEN = os.getenv("BOT_TOKEN")
+
+    # التحقق من وجود التوكن
+    if not TOKEN:
+        raise ValueError("TOKEN غير موجود في متغيرات البيئة")
+
+    application = Application.builder().token(TOKEN).build()
     
     # إضافة المعالجات
     application.add_handler(CommandHandler("start", start))
