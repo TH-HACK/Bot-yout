@@ -15,16 +15,19 @@ def get_streams(url):
     return qualities, audio_tag
 
 # استقبال رابط الفيديو
-@bot.message_handler(commands=['start', 'help'])
-def send_welcome(message):
-    bot.reply_to(message, "أرسل لي رابط فيديو اليوتيوب لتحميله.")
+import re
 
 @bot.message_handler(func=lambda message: True)
 def download_video(message):
-    url = message.text.strip()  # إزالة أي مسافات زائدة
+    url = message.text.strip()
+
+    # إزالة المعلمات الإضافية إذا كانت موجودة
+    url = re.sub(r'(\?|&).+', '', url)
+
     if not url.startswith("http"):
         bot.reply_to(message, "عذرًا، تأكد من أن الرابط يبدأ بـ http:// أو https://")
         return
+
     try:
         qualities, audio_tag = get_streams(url)
         
@@ -39,6 +42,3 @@ def download_video(message):
     except Exception as e:
         print(e)  # طباعة الخطأ لتشخيص المشكلة
         bot.reply_to(message, "عذرًا، حدث خطأ. تأكد من أن الرابط صالح وأنه فيديو يوتيوب.")
-
-# تشغيل البوت
-bot.polling()
