@@ -11,7 +11,8 @@ def download_video(url):
         video_file = video_stream.download(output_path="downloads/")
         return video_file
     except Exception as e:
-        return f"خطأ في تحميل الفيديو: {e}"
+        print(f"Error in download_video: {e}")
+        return None
 
 # دالة الترحيب عند بدء المحادثة
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -24,9 +25,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text("جاري تحميل الفيديو...")
         video_file = download_video(url)
         
-        if "خطأ" in video_file:
+        if video_file is None:
             # إذا كان هناك خطأ أثناء التحميل
-            await update.message.reply_text(f"{video_file}")
+            await update.message.reply_text("حدث خطأ أثناء تحميل الفيديو. تأكد من أن الرابط صحيح.")
         else:
             # إرسال الفيديو
             with open(video_file, 'rb') as video:
