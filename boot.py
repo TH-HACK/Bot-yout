@@ -15,11 +15,25 @@ def get_streams(url):
     audio_tag = audio_stream.itag if audio_stream else None
     return qualities, audio_tag
 
+# دالة لتحويل الروابط المختصرة إلى الروابط الكاملة
+def convert_youtube_url(url):
+    if "youtu.be" in url:
+        return url.replace("youtu.be", "youtube.com/watch?v=")
+    return url
+
+# رسالة الإبلاغ عن تحديث الروبوت
+def send_startup_message(chat_id):
+    bot.send_message(chat_id, "تم تحديث الروبوت وتفعيله!")
+
 # استقبال رابط الفيديو
 @bot.message_handler(func=lambda message: True)
 def download_video(message):
     url = message.text.strip()
-    
+    print(f"Received URL: {url}")  # طباعة الرابط المستلم
+
+    # تحويل الرابط إذا كان مختصرًا
+    url = convert_youtube_url(url)
+
     # إزالة المعلمات الإضافية إذا كانت موجودة
     url = re.sub(r'(\?|&).+', '', url)
 
@@ -29,6 +43,9 @@ def download_video(message):
 
     try:
         qualities, audio_tag = get_streams(url)
+        if not qualities:
+            bot.reply_to(message, "عذرًا، لم أتمكن من العثور على أي جودات للفيديو.")
+            return
         
         # إعداد لوحة الأزرار
         markup = InlineKeyboardMarkup()
@@ -39,7 +56,7 @@ def download_video(message):
 
         bot.reply_to(message, "اختر الجودة التي تريدها أو اختر تحميل كملف صوتي:", reply_markup=markup)
     except Exception as e:
-        print(e)  # طباعة الخطأ لتشخيص المشكلة
+        print(f"Error: {e}")  # طباعة الخطأ لتشخيص المشكلة
         bot.reply_to(message, "عذرًا، حدث خطأ. تأكد من أن الرابط صالح وأنه فيديو يوتيوب.")
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -58,5 +75,11 @@ def callback_query(call):
             bot.answer_callback_query(call.id, "تم تحميل الصوت!")
     except Exception as e:
         bot.answer_callback_query(call.id, "عذرًا، حدث خطأ أثناء التحميل.")
+
+# معرف الدردشة الذي سترسل إليه رسالة التحديث
+CHAT_ID = '5164991393'  # استبدل هذا بمعرف الدردشة الخاص بك
+
+# إرسال رسالة عند بدء التشغيل
+send_startup_message(CHAT_ID)
 
 bot.polling()
