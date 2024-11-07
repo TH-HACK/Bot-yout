@@ -1,12 +1,8 @@
-# استخدم صورة PHP
-FROM php:8.1-cli
-
-# نسخ جميع الملفات إلى مجلد التطبيق
-WORKDIR /app
-COPY . /app
-
-# فتح المنفذ 8000
-EXPOSE 8000
-
-# تشغيل الخادم
-CMD ["php", "-S", "0.0.0.0:8000", "-t", "/app"]
+{
+  "build": {
+    "builder": "Dockerfile"
+  },
+  "deploy": {
+    "command": "php -S 0.0.0.0:8000 -t /app"
+  }
+}
