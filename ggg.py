@@ -1,7 +1,7 @@
 import os
-import telebot,base64
+import telebot
 from telebot import types
-#import yt_dlp
+import yt_dlp
 import time
 from urllib.parse import urlparse, parse_qs, urlunparse
 
@@ -11,7 +11,7 @@ bot = telebot.TeleBot(BOT_TOKEN)
 USERS_FILE = 'users.txt'
 STATS_FILE = 'stats.txt'
 VIDEO_DIR = 'video'
-ADMIN_ID = 5164991393 #ايدي حسابك+++تطوير @YQYQY6----@z1_xa
+ADMIN_ID = 1457 #ايدي حسابك
 
 if not os.path.exists(USERS_FILE):
     open(USERS_FILE, 'w').close()
@@ -49,11 +49,17 @@ def start(message):
 
     bot.send_photo(
         chat_id=message.chat.id,  
-        photo=base64.b64decode("aHR0cHM6Ly9wb3N0aW1nLmNjLzBLQ2p2U1BO").decode('utf-8'),
-        caption=base64.b64decode(f"8J+Ri+KUh9ij2YfZhNin2Ysg2KjZgyDYudiy2YrYstmF2Lkg2YfYsNinINin2YTYqNmI2Kog2YrZhdmD2YbZgyDYqtit2YXZitmEINin2YTZhdit2KrZiNmJINmF2YYg2LnYr9ipINmF2YjYp9mC2LnZgdmKINio2YjYqiDYp9mE2KrYrdmF2YrZhCDZhdmGINmF2YjYp9mC2Lkg2KfZhNiq2YjYp9i12YTYjCDZitmF2YPZhtmDINin2YTYotmGINiq2K3ZhdmK2YQg2YHZitiv2YrZiNmH2KfYqiDYtdmI2KrZitipINmF2YYg2YXZhti12KfYqiDZhdir2YQgwqvCqyDYqtmK2YMg2KrZiNmD2Iwg4pyo2KXZhtiz2KrYrNix2KfZheKcqNiMINmK2YjYqtmK2YjYqNiMIOKcqNmB2YrYs9io2YjZg9iMIOKcqOKcqCDZiNiq2YjZitiq2LEgWMK7wrsuINiq2LfZiNmK2LEgQHlxeXF5Ng===").decode('utf-8'), 
+        photo="https://postimg.cc/rD2QgXDw/64f45a3f",  # رابط الصورة
+        caption=f"""*👋┇أهلاً بك عزيزي
+
+مع هذا البوت يمكنك تحميل المحتوى من عدة مواقع
+
+في بوت التحميل من مواقع التواصل، 
+يمكنك الآن تحميل فيديوهات صوتية من منصات مثل «« تيك توك، ✨إنستجرام✨، يوتيوب، ✨فيسبوك، ✨✨ وتويتر X»».*""",
         parse_mode="Markdown",  
         reply_markup=markup  
     )
+
 
 @bot.callback_query_handler(func=lambda call: call.data in ["tiktok", "instagram", "youtube", "facebook", "twitter"])
 def handle_platform_selection(call):
