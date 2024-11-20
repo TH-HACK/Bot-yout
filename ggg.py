@@ -11,7 +11,7 @@ bot = telebot.TeleBot(BOT_TOKEN)
 USERS_FILE = 'users.txt'
 STATS_FILE = 'stats.txt'
 VIDEO_DIR = 'video'
-ADMIN_ID = 1457 #ايدي حسابك
+ADMIN_ID = 5164991393 #ايدي حسابك
 
 if not os.path.exists(USERS_FILE):
     open(USERS_FILE, 'w').close()
