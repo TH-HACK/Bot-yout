@@ -5,7 +5,8 @@ from telebot import types
 import time
 from urllib.parse import urlparse, parse_qs, urlunparse
 
-bot = telebot.TeleBot("7901940137:AAGQfDnI_P-LN5U_BtJGCPmAaZNXJp80jdMا") #تطوير @YQYQY6----@z1_xa
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+bot = telebot.TeleBot(BOT_TOKEN)
 
 USERS_FILE = 'users.txt'
 STATS_FILE = 'stats.txt'
