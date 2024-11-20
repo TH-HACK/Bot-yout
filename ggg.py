@@ -2,8 +2,7 @@ import os
 import telebot
 from telebot import types
 import yt_dlp
-import time
-from urllib.parse import urlparse, parse_qs, urlunparse
+from urllib.parse import urlparse
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 bot = telebot.TeleBot(BOT_TOKEN)
@@ -22,6 +21,7 @@ if not os.path.exists(STATS_FILE):
 
 if not os.path.exists(VIDEO_DIR):
     os.makedirs(VIDEO_DIR)
+
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -44,7 +44,7 @@ def start(message):
 
     bot.send_photo(
         chat_id=message.chat.id,
-        photo="https://postimg.cc/rD2QgXDw/64f45a3f",  # رابط الصورة
+        photo="https://postimg.cc/rD2QgXDw/64f45a3f",
         caption=f"""*👋┇أهلاً بك عزيزي
 
 مع هذا البوت يمكنك تحميل المحتوى من عدة مواقع
@@ -55,6 +55,7 @@ def start(message):
         reply_markup=markup
     )
 
+
 @bot.callback_query_handler(func=lambda call: call.data in ["tiktok", "instagram", "youtube", "facebook", "twitter"])
 def handle_platform_selection(call):
     platform = call.data
@@ -62,60 +63,52 @@ def handle_platform_selection(call):
 
 *- يمكنك تحميل مقاطع الفيديو العامة من تطبيق {platform} (بدون علامة مائية)
 
-- فقط ارسل رابط المقطع الان*""", 
-        parse_mode="Markdown" 
+- فقط ارسل رابط المقطع الان*""",
+        parse_mode="Markdown"
     )
     bot.register_next_step_handler(call.message, download_content, platform)
+
 
 def clean_url(url):
     """إزالة المعلمات الإضافية من الرابط"""
     parsed_url = urlparse(url)
     clean_url = parsed_url._replace(query='').geturl()
-    
+
     if 'twitter.com' in clean_url or 'x.com' in clean_url:
         if not clean_url.endswith('/'):
             clean_url += '/'
-    
+
     return clean_url
+
 
 def download_content(message, platform):
     url = message.text
     clean_video_url = clean_url(url)
-    if platform == "tiktok" and 'tiktok.com' in clean_video_url:
-        ask_format(message)
-    elif platform == "instagram" and 'instagram.com' in clean_video_url:
-        ask_format(message)
-    elif platform == "youtube" and ('youtube.com' in clean_video_url or 'youtu.be' in clean_video_url):
-        ask_format(message)
-    elif platform == "facebook" and 'facebook.com' in clean_video_url:
-        ask_format(message)
-    elif platform == "twitter" and ('twitter.com' in clean_video_url or 'x.com' in clean_video_url):
-        ask_format(message)
-    else:
-        bot.send_message(message.chat.id, f"يرجى إرسال رابط صحيح من {platform}.")
-        bot.register_next_step_handler(message, download_content, platform)
 
-def ask_format(message):
-    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+    # إضافة خيار لتحميل الفيديو أو الصوت
+    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
     btn_video = types.KeyboardButton("فيديو")
     btn_audio = types.KeyboardButton("صوت")
     markup.add(btn_video, btn_audio)
-    bot.send_message(message.chat.id, "هل ترغب في تحميل الفيديو أو الصوت؟", reply_markup=markup)
-    bot.register_next_step_handler(message, process_format_choice)
 
-def process_format_choice(message):
-    format_choice = message.text
-    if format_choice == "فيديو":
-        bot.send_message(message.chat.id, "⏳ جاري تحميل الفيديو...")
-        download_video(message.text, message.chat.id)
-    elif format_choice == "صوت":
-        bot.send_message(message.chat.id, "⏳ جاري تحميل الصوت...")
-        download_audio(message.text, message.chat.id)
+    bot.send_message(message.chat.id, "هل تريد تحميل الفيديو أم الصوت؟", reply_markup=markup)
+
+    bot.register_next_step_handler(message, handle_media_type, clean_video_url, platform)
+
+
+def handle_media_type(message, url, platform):
+    media_type = message.text.lower()
+
+    if media_type == "فيديو":
+        download_video(url, message.chat.id, platform)
+    elif media_type == "صوت":
+        download_audio(url, message.chat.id, platform)
     else:
-        bot.send_message(message.chat.id, "يرجى اختيار فيديو أو صوت فقط.")
-        bot.register_next_step_handler(message, process_format_choice)
+        bot.send_message(message.chat.id, "يرجى اختيار فيديو أو صوت.")
+        bot.register_next_step_handler(message, handle_media_type, url, platform)
 
-def download_video(url, chat_id, remove_watermark=False, is_youtube=False):
+
+def download_video(url, chat_id, platform):
     try:
         user_id = str(chat_id)
         video_path = os.path.join(VIDEO_DIR, f"{user_id}.mp4")
@@ -130,18 +123,11 @@ def download_video(url, chat_id, remove_watermark=False, is_youtube=False):
             'postprocessors': [],
         }
 
-        if remove_watermark:
+        if platform == "tiktok":
             ydl_opts['postprocessors'].append({
                 'key': 'FFmpegVideoRemuxer',
                 'preferedformat': 'mp4'
             })
-
-        if is_youtube:
-            cookies_file = 'cookies.txt'
-            if os.path.exists(cookies_file):
-                ydl_opts['cookiefile'] = cookies_file
-            else:
-                bot.send_message(chat_id, "🚨 لم يتم العثور على ملف الكوكيز. تأكد من وجوده في المسار المحدد.")
 
         bot.send_message(chat_id, "⏳ جاري تحميل الفيديو، يرجى الانتظار...")
 
@@ -166,7 +152,8 @@ def download_video(url, chat_id, remove_watermark=False, is_youtube=False):
     except Exception as e:
         bot.send_message(chat_id, f"🚨 حدث خطأ أثناء تحميل الفيديو: {e}")
 
-def download_audio(url, chat_id):
+
+def download_audio(url, chat_id, platform):
     try:
         user_id = str(chat_id)
         audio_path = os.path.join(VIDEO_DIR, f"{user_id}.mp3")
@@ -180,27 +167,24 @@ def download_audio(url, chat_id):
             'retry_wait': 5,
             'postprocessors': [{
                 'key': 'FFmpegAudioConvertor',
-                'preferredformat': 'mp3',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
             }],
         }
 
         bot.send_message(chat_id, "⏳ جاري تحميل الصوت، يرجى الانتظار...")
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info_dict = ydl.extract_info(url, download=True)
-
-            audio_size = info_dict.get('filesize', 0)
-            audio_size_mib = audio_size / (1024 * 1024) if audio_size else 0
-
-            message_text = f"💾 {audio_size_mib:.2f} MIB"
+            ydl.download([url])
 
         with open(audio_path, "rb") as audio:
-            bot.send_audio(chat_id, audio, caption=message_text)
+            bot.send_audio(chat_id, audio)
 
         os.remove(audio_path)
 
     except Exception as e:
         bot.send_message(chat_id, f"🚨 حدث خطأ أثناء تحميل الصوت: {e}")
+
 
 def save_user(user_id, username, full_name):
     user_id = str(user_id)
@@ -218,3 +202,113 @@ def save_user(user_id, username, full_name):
 
         bot.send_message(
             ADMIN_ID,
+            f"""• دخل شخص جديد إلى البوت الخاص بك 👾
+
+- معلومات المستخدم الجديد:
+
+- اسمه: {full_name or 'غير متوفر'}
+- معرفه: @{username if username else 'غير متوفر'}
+- ايديه: {user_id}
+
+• اجمالي الاعضاء: {total_users}"""
+        )
+
+
+def update_stats(platform):
+    platform_mapping = {
+        "tiktok": "تيك توك",
+        "youtube": "يوتيوب",
+        "instagram": "إنستغرام",
+        "facebook": "فيسبوك",
+        "twitter": "تويتر",
+    }
+    platform_name = platform_mapping.get(platform.lower())
+    
+    if not platform_name:
+        print(f"❌ لم يتم العثور على المنصة: {platform}")
+        return
+
+    try:
+        with open(STATS_FILE, 'r') as f:
+            stats = f.read().splitlines()
+
+        new_stats = []
+        found = False
+        for line in stats:
+            if line.startswith(platform_name):
+                platform_label, count = line.rsplit(' ', 1)
+                new_stats.append(f"{platform_label} {int(count) + 1}")
+                found = True
+            else:
+                new_stats.append(line)
+
+        if not found:
+            new_stats.append(f"{platform_name} 1")
+
+        with open(STATS_FILE, 'w') as f:
+            f.write('\n'.join(new_stats) + '\n')
+
+        print(f"✅ تم تحديث الإحصائيات لمنصة {platform_name}.")
+
+    except Exception as e
+    print(f"❌ خطأ أثناء تحديث الإحصائيات: {e}")
+
+def get_stats():
+    with open(STATS_FILE, 'r') as f:
+        stats = f.read()
+    
+    with open(USERS_FILE, 'r') as f:
+        users_count = len(f.read().splitlines())
+
+    stats_message = f"\n\n📊 الإحصائيات:\n\n عدد الفيديوهات المحملة لكل منصة\n\n \n\n{stats}\n\n👥 عدد مستخدمي البوت: {users_count}"
+    return stats_message
+
+
+@bot.message_handler(commands=['admin'])
+def admin_panel(message):
+    if message.from_user.id != ADMIN_ID:
+        bot.send_message(message.chat.id, "🚫 هذا الأمر مخصص للمسؤول فقط.")
+        return
+
+    markup = types.InlineKeyboardMarkup(row_width=1)
+    btn_broadcast = types.InlineKeyboardButton("إذاعة", callback_data="broadcast")
+    btn_broadcast_pin = types.InlineKeyboardButton("إذاعة بالتثبيت", callback_data="broadcast_pin")
+    btn_stats = types.InlineKeyboardButton("الإحصائيات", callback_data="stats")
+    markup.add(btn_broadcast, btn_broadcast_pin, btn_stats)
+    bot.send_message(message.chat.id, "🔧 لوحة التحكم:", reply_markup=markup)
+
+
+@bot.callback_query_handler(func=lambda call: call.data in ["broadcast", "broadcast_pin", "stats"])
+def handle_admin_actions(call):
+    if call.from_user.id != ADMIN_ID:
+        bot.answer_callback_query(call.id, "🚫 ليس لديك إذن.")
+        return
+
+    if call.data == "broadcast":
+        msg = bot.send_message(call.message.chat.id, "✉️ أرسل الرسالة التي تريد إذاعتها:")
+        bot.register_next_step_handler(msg, broadcast_message)
+
+    elif call.data == "broadcast_pin":
+        msg = bot.send_message(call.message.chat.id, "📌 أرسل الرسالة التي تريد إذاعتها مع التثبيت:")
+        bot.register_next_step_handler(msg, broadcast_message, pin=True)
+
+    elif call.data == "stats":
+        stats = get_stats()
+        bot.send_message(call.message.chat.id, stats)
+
+
+def broadcast_message(message, pin=False):
+    with open(USERS_FILE, 'r') as f:
+        all_users = f.read().splitlines()
+
+    for user_id in all_users:
+        try:
+            sent_message = bot.send_message(user_id, message.text)
+            if pin:
+                bot.pin_chat_message(user_id, sent_message.message_id)
+        except Exception as e:
+            print(f"🚨 خطأ أثناء الإرسال إلى {user_id}: {e}")
+
+
+print('🚀 البوت يعمل الآن!')
+bot.infinity_polling()
