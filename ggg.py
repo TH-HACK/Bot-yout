@@ -1,7 +1,7 @@
 import os
 import telebot,base64
 from telebot import types
-#import yt_dlp
+import yt_dlp
 import time
 from urllib.parse import urlparse, parse_qs, urlunparse
 
