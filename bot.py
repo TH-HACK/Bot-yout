@@ -66,8 +66,8 @@ async def handle_decrypt(update: Update, context: CallbackContext) -> None:
                 file.name = "تم فك تشفيره.txt"
 
                 # إرسال النص والملف
-                await update.message.reply_text("نظرًا لطول الرسالة، تم إرسالها عبر ملف.")
-              await update.message.reply_text("بعد فك تشفير قم بأخد الكود و دخل الى  CHAT GBT  وكتب له قم بترتيب هذا لكود و تحويله الى كود بايثون 📝🩵")
+                await update.message.reply_text("نظرًا لطول الرسالة، تم إرسالها عبر ملف"
+                   "/n/n بعد فك تشفير قم بأخد الكود و دخل الى  CHAT GBT  وكتب له قم بترتيب هذا لكود و تحويله الى كود بايثون 📝🩵")                     
                 await update.message.reply_document(InputFile(file, filename="تم_فك_تشفيره.txt"))
             else:
                 await update.message.reply_text(result_message)  # إرسال النص المفكك مباشرة
