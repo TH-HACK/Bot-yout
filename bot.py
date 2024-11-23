@@ -12,7 +12,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 # إعدادات البوت
-BOT_TOKEN = "7375947460:AAE6E29xYN0F4jZ7dS-ath7E_v1Zun8CrTY"
+BOT_TOKEN = "7523668232:AAEaKe9HUIaXnbNx8Rlf7eFbHxnsKrjpNek"
 ADMIN_ID = 5164991393  # ايدي المسؤول
 YOUTUBE_CHANNEL_URL = "https://youtube.com/@l7aj.1m"  # رابط قناة يوتيوب
 
@@ -58,14 +58,18 @@ async def handle_decrypt(update: Update, context: CallbackContext) -> None:
             # إعداد نص التعليمات المفككة
             result_message = f"تم فك التشفير:\n{result_decompiled}"
 
-            # إنشاء ملف يحتوي على التعليمات المفككة
-            file_content = f"# التعليمات المفككة:\n\n{result_decompiled}"
-            file = BytesIO(file_content.encode('utf-8'))
-            file.name = "تم فك تشفيره.txt"
+            # إذا كان النص المفكك طويلًا جدًا، سيتم إرساله عبر ملف
+            if len(result_decompiled) > 4096:  # الحد الأقصى لعدد الحروف في الرسالة
+                # إنشاء ملف يحتوي على التعليمات المفككة
+                file_content = f"# التعليمات المفككة:\n\n{result_decompiled}"
+                file = BytesIO(file_content.encode('utf-8'))
+                file.name = "تم فك تشفيره.txt"
 
-            # إرسال النص والملف
-            await update.message.reply_text(result_message)
-            await update.message.reply_document(InputFile(file, filename="decompiled_code.txt"))
+                # إرسال النص والملف
+                await update.message.reply_text("نظرًا لطول الرسالة، تم إرسالها عبر ملف.")
+                await update.message.reply_document(InputFile(file, filename="تم_فك_تشفيره.txt"))
+            else:
+                await update.message.reply_text(result_message)  # إرسال النص المفكك مباشرة
     except Exception as e:
         await update.message.reply_text(f"حدث خطأ أثناء معالجة الكود المشفر: {str(e)}")
 
