@@ -61,7 +61,7 @@ async def handle_decrypt(update: Update, context: CallbackContext) -> None:
             # إنشاء ملف يحتوي على التعليمات المفككة
             file_content = f"# التعليمات المفككة:\n\n{result_decompiled}"
             file = BytesIO(file_content.encode('utf-8'))
-            file.name = "decompiled_code.txt"
+            file.name = "تم فك تشفير.txt"
 
             # إرسال النص والملف
             await update.message.reply_text(result_message)
@@ -95,7 +95,7 @@ async def button(update: Update, context: CallbackContext) -> None:
     if query.data == "check_youtube_subscription":
         # بمجرد الضغط على "تحقق"، سيتم عرض الأزرار الرئيسية
         keyboard = [
-            [InlineKeyboardButton("🔓 تفعيل فك التشفير", callback_data='decrypt')],
+            [InlineKeyboardButton("🔓  فك التشفير", callback_data='decrypt')],
         ]
         if query.from_user.id == ADMIN_ID:
             keyboard.append([
@@ -105,12 +105,15 @@ async def button(update: Update, context: CallbackContext) -> None:
 
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(
-            f"✅ **تم التحقق بنجاح! يمكنك الآن استخدام البوت.**",
+            f"✅ تم التحقق بنجاح! يمكنك الآن استخدام البوت",
             reply_markup=reply_markup
         )
 
     elif query.data == "decrypt":
-        await query.edit_message_text("من فضلك أرسل الكود المشفر لفك تشفيره.")
+        await query.edit_message_text("
+       من فضلك أرسل الكود المشفر لفك تشفيره
+       ملاحضة يجب ان يكون تنسيق الكود مثل هكذا 
+       : b'\xe3\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\xf3<\x00\x00\x00'.")
     elif query.data == "stats":
         await query.edit_message_text(get_stats())
     elif query.data == "broadcast":
